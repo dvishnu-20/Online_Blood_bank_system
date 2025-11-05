@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blood Link - Online Blood Bank System</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDRJF9d1rhpeQKrmJHOomiLr6Bsd7cJ1vo"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script type="text/javascript"
+        src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js">
+    </script>
+    <style>
+        /* styles for the new news feed */
+        .news-article {
+            padding: 12px 0;
+            border-bottom: 1px solid #eee; /* Use a light separator */
+        }
+        .news-article:last-child {
+            border-bottom: none; /* No border on the last item */
+        }
+        .news-article a {
+            text-decoration: none;
+        }
+        .news-article-title {
+            margin: 0;
+            font-weight: 500;
+            color: var(--color-text-primary, #333);
+        }
+        .news-article-source {
+            margin: 4px 0 0 0;
+            font-size: var(--font-size-sm, 0.875rem);
+            color: var(--color-text-secondary, #777);
+        }
+        #news-content {
+             max-height: 300px;
+             overflow-y: auto;
+             padding-right: 10px; /* For the scrollbar */
+        }
+    </style>
+</head>
+<body>
+    <div id="landingPage" class="page active">
+        <nav class="navbar">
+            <div class="container flex items-center justify-between">
+                <div class="logo">
+                    <h2>🩸 Blood Link</h2>
+                </div>
+                <div class="nav-links">
+                    <a href="#about">About</a>
+                    <a href="#urgent">Urgent needs</a>
+                    <a href="#login">Login / Sign Up</a>
+                    <a href="#contact">Contact</a>
+                </div>
+            </div>
+        </nav>
+
+        <section class="hero" id="about">
+            <div class="container">
+                <div class="hero-content">
+                    <h1>Connecting Lives Through Blood Donation</h1>
+                    <p>Blood Link bridges the gap between blood donors, recipients, and blood banks, creating a seamless network that saves lives every day.</p>
+                    <div class="hero-stats">
+                        <div class="stat">
+                            <h3 id="donationsMadeStat">--</h3>
+                            <p>Donations Made</p>
+                        </div>
+                        <div class="stat">
+                            <h3 id="livesSavedStat">--</h3>
+                            <p>Lives Saved</p>
+                        </div>
+                        <div class="stat">
+                            <h3 id="bloodBanksStat">--</h3>
+                            <p>Blood Banks</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="urgent-needs" id="urgent">
+            <div class="container">
+                <h2>🚨 Urgent Blood Needs</h2>
+                <div class="urgent-grid" id="urgentGrid"></div>
+            </div>
+        </section>
+
+        <section class="auth-section" id="login">
+            <div class="container">
+                <h2>Choose Your Role</h2>
+                <div class="auth-grid">
+                    <div class="auth-card donor-card">
+                        <div class="auth-icon">🩸</div>
+                        <h3>Donor</h3>
+                        <p>Help save lives by donating blood to those in need</p>
+                        <div class="auth-buttons">
+                            <button class="btn btn--primary" onclick="showAuth('donor', 'login')">Login</button>
+                            <button class="btn btn--outline" onclick="showAuth('donor', 'signup')">Sign Up</button>
+                        </div>
+                    </div>
+                    <div class="auth-card recipient-card">
+                        <div class="auth-icon">🏥</div>
+                        <h3>Recipient</h3>
+                        <p>Request blood for medical emergencies and planned procedures</p>
+                        <div class="auth-buttons">
+                            <button class="btn btn--primary" onclick="showAuth('recipient', 'login')">Login</button>
+                            <button class="btn btn--outline" onclick="showAuth('recipient', 'signup')">Sign Up</button>
+                        </div>
+                    </div>
+                    <div class="auth-card admin-card">
+                        <div class="auth-icon">⚕️</div>
+                        <h3>Admin</h3>
+                        <p>Manage blood bank operations and monitor inventory</p>
+                        <div class="auth-buttons">
+                            <button class="btn btn--primary" onclick="showAuth('admin', 'login')">Login</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="contact" class="contact-section">
+            <div class="container">
+                <h2>Get in Touch</h2>
+                <p>If you have any questions or need assistance, please don't hesitate to contact us.</p>
+                <div class="contact-details">
+                    <p>📧 Email: <a href="mailto:contact@bloodlink.org">contact@bloodlink.org</a></p>
+                    <p>📞 Phone: +91 (416) 220-2000</p>
+                    <p>📍 Address: Blood Link Headquarters, Vellore, Tamil Nadu</p>
+                </div>
+            </div>
+        </section>
+        
+        <footer class="footer">
+             <div class="container">
+                <p>&copy; 2025 Blood Link. Connecting Lives.</p>
+            </div>
+        </footer>
+
+    </div>
+
+    <div id="authModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="authTitle">Login</h3>
+                <button class="modal-close" onclick="hideAuth()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="authForm">
+                    <div id="authFields">
+                        </div>
+                    <button type="submit" class="btn btn--primary btn--full-width">Submit</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="donorDashboard" class="page dashboard hidden">
+        <nav class="dashboard-nav">
+            <div class="container flex items-center justify-between">
+                <h2>🩸 Donor Dashboard</h2>
+                <div class="nav-actions">
+                    <span id="donorWelcome">Welcome, Donor</span>
+                    <button class="btn btn--outline btn--sm" onclick="logout()">Logout</button>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container dashboard-content">
+            <div class="dashboard-grid">
+                <div class="card profile-card">
+                    <div class="card__body">
+                        <h4>Profile Summary</h4>
+                        <div id="donorProfile" class="profile-info">
+                            </div>
+                    </div>
+                </div>
+
+                <div class="card eligibility-card">
+                    <div class="card__body">
+                        <h4>Donation Eligibility</h4>
+                        <div id="eligibilityStatus" class="eligibility-info">
+                            </div>
+                    </div>
+                </div>
+
+                <div class="card donate-card">
+                    <div class="card__body">
+                        <h4>🎯 Donate Now</h4>
+                        <div class="donate-section">
+                            <p>Find nearby blood banks and schedule your donation:</p>
+                            <div id="nearbyBanks" class="bank-list">
+                                </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card map-card">
+                    <div class="card__body">
+                        <h4>📍 Nearby Blood Banks</h4>
+                        <div id="map" style="height: 300px; width: 100%; border-radius: 8px;"></div>
+                    </div>
+                </div>
+
+                <div class="card full-width">
+                    <div class="card__body">
+                        <h4>Recent Appointments</h4>
+                        <div id="recentAppointments">
+                            </div>
+                    </div>
+                </div>
+
+                <div class="card history-card full-width">
+                    <div class="card__body">
+                        <h4>📊 Full Donation History</h4>
+                        <div class="table-container">
+                            <table class="history-table" id="donationHistory">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Location</th>
+                                        <th>Blood Type</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card rules-card full-width">
+                    <div class="card__body">
+                        <h4>📋 Donation Guidelines</h4>
+                        <div id="donationRules" class="rules-content">
+                            </div>
+                    </div>
+                </div>
+
+                <div class="card full-width" id="healthNewsCard">
+                    <div class="card__body">
+                        <h4>Latest Health News</h4>
+                        <div id="news-content">
+                            <p>Loading news...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="recipientDashboard" class="page dashboard hidden">
+        <nav class="dashboard-nav">
+            <div class="container flex items-center justify-between">
+                <h2>🏥 Recipient Dashboard</h2>
+                <div class="nav-actions">
+                    <span id="recipientWelcome">Welcome, Recipient</span>
+                    <button class="btn btn--outline btn--sm" onclick="logout()">Logout</button>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container dashboard-content">
+            <div class="dashboard-grid">
+                <div class="card request-card">
+                    <div class="card__body">
+                        <h4>🆘 Request Blood</h4>
+                        <form id="bloodRequestForm">
+                            <div class="form-group">
+                                <label class="form-label">Blood Type Needed</label>
+                                <select class="form-control" name="bloodType" required>
+                                    <option value="">Select Blood Type</option>
+                                    <option value="A+">A+</option>
+                                    <option value="A-">A-</option>
+                                    <option value="B+">B+</option>
+                                    <option value="B-">B-</option>
+                                    <option value="AB+">AB+</option>
+                                    <option value="AB-">AB-</option>
+                                    <option value="O+">O+</option>
+                                    <option value="O-">O-</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Units Required</label>
+                                <input type="number" class="form-control" name="units" min="1" max="10" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Urgency Level</label>
+                                <select class="form-control" name="urgency" required>
+                                    <option value="">Select Urgency</option>
+                                    <option value="critical">Critical (Emergency)</option>
+                                    <option value="high">High (Within 24 hours)</option>
+                                    <option value="moderate">Moderate (Within 48 hours)</option>
+                                    <option value="low">Low (Within a week)</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn--primary btn--full-width">Submit Request</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card availability-card">
+                    <div class="card__body">
+                        <h4>🏦 Available Blood Banks</h4>
+                        <div id="availableBanks" class="bank-availability">
+                            </div>
+                    </div>
+                </div>
+
+                <div class="card current-requests-card">
+                    <div class="card__body">
+                        <h4>📋 Current Requests</h4>
+                        <div id="currentRequests" class="requests-list">
+                            </div>
+                    </div>
+                </div>
+
+                <div class="card map-card">
+                    <div class="card__body">
+                        <h4>📍 Blood Bank Locations</h4>
+                        <div id="recipientMap" style="height: 300px; width: 100%; border-radius: 8px;"></div>
+                    </div>
+                </div>
+
+                <div class="card history-card full-width">
+                    <div class="card__body">
+                        <h4>📊 Request History</h4>
+                        <div class="table-container">
+                            <table class="history-table" id="requestHistory">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Blood Type</th>
+                                        <th>Units</th>
+                                        <th>Location</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="adminDashboard" class="page dashboard hidden">
+        <nav class="dashboard-nav">
+            <div class="container flex items-center justify-between">
+                <h2>⚕️ Admin Dashboard</h2>
+                <div class="nav-actions">
+                    <span>Welcome, Admin</span>
+                    <button class="btn btn--outline btn--sm" onclick="logout()">Logout</button>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container dashboard-content">
+            <div class="dashboard-grid">
+                <div class="card stats-card">
+                    <div class="card__body">
+                        <h4>📊 Overview</h4>
+                        <div id="adminOverviewStats" class="stats-grid">
+                            <div class="stat-item">
+                                <h3 id="totalDonationsStat">--</h3>
+                                <p>Total Donations</p>
+                            </div>
+                            <div class="stat-item">
+                                <h3 id="totalRequestsStat">--</h3>
+                                <p>Total Requests</p>
+                            </div>
+                            <div class="stat-item">
+                                <h3 id="successfulMatchesStat">--</h3>
+                                <p>Successful Matches</p>
+                            </div>
+                            <div class="stat-item">
+                                <h3 id="pendingRequestsStat">--</h3>
+                                <p>Pending Requests</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card filters-card">
+                    <div class="card__body">
+                        <h4>🔍 Inventory Filters</h4>
+                        <div class="filter-grid">
+                            <div class="form-group">
+                                <label class="form-label">Blood Type</label>
+                                <select class="form-control" id="bloodTypeFilter">
+                                    <option value="">All Types</option>
+                                    <option value="A+">A+</option><option value="A-">A-</option>
+                                    <option value="B+">B+</option><option value="B-">B-</option>
+                                    <option value="AB+">AB+</option><option value="AB-">AB-</option>
+                                    <option value="O+">O+</option><option value="O-">O-</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Location</label>
+                                <select class="form-control" id="locationFilter">
+                                </select>
+                            </div>
+                        </div>
+                        <button class="btn btn--primary" onclick="applyFilters()">Apply Filters</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card__body">
+                        <h4>🗓️ Scheduled Donation Appointments</h4>
+                        <div id="scheduledAppointmentsContainer">
+                            </div>
+                    </div>
+                </div>
+
+                
+
+                <div class="card full-width">
+                    <div class="card__body">
+                        <h4>Pending Blood Requests</h4>
+                        <div id="pendingRequestsContainer">
+                            </div>
+                    </div>
+                </div>
+                
+                <div class="card chart-card">
+                    <div class="card__body">
+                        <h4>📈 Monthly Trends</h4>
+                        <div class="chart-container" style="position: relative; height: 300px;">
+                            <canvas id="trendsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card__body">
+                        <h4>➕ Manage Blood Banks</h4>
+                        <p>Add a new blood bank to expand the network.</p>
+                        <button class="btn btn--primary btn--full-width mt-16" onclick="showAddBankModal()">Add New Bank</button>
+                    </div>
+                </div>
+
+                <div class="card inventory-card full-width">
+                    <div class="card__body">
+                        <h4>🏦 Blood Bank Inventory</h4>
+                        <div id="inventoryTable" class="inventory-display">
+                            </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="addBankModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New Blood Bank</h3>
+                <button class="modal-close" onclick="hideAddBankModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="addBankForm">
+                    <div class="form-group">
+                        <label class="form-label">Bank Name</label>
+                        <input type="text" name="name" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Address</label>
+                        <input type="text" name="address" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Phone</label>
+                        <input type="tel" name="phone" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Operating Hours</label>
+                        <input type="text" name="operatingHours" class="form-control" placeholder="e.g., 24/7 or 9:00 AM - 5:00 PM" required>
+                    </div>
+                    <h5 style="margin-top: 1.5rem; margin-bottom: 0.5rem; font-size: var(--font-size-md);">Initial Inventory</h5>
+                    <div class="inventory-grid" style="padding: 0; gap: 8px;">
+                        <div class="form-group"><label class="form-label">A+</label><input type="number" name="inv_A_plus" class="form-control" min="0" value="0"></div>
+                        <div class="form-group"><label class="form-label">A-</label><input type="number" name="inv_A_minus" class="form-control" min="0" value="0"></div>
+                        <div class="form-group"><label class="form-label">B+</label><input type="number" name="inv_B_plus" class="form-control" min="0" value="0"></div>
+                        <div class="form-group"><label class="form-label">B-</label><input type="number" name="inv_B_minus" class="form-control" min="0" value="0"></div>
+                        <div class="form-group"><label class="form-label">AB+</label><input type="number" name="inv_AB_plus" class="form-control" min="0" value="0"></div>
+                        <div class="form-group"><label class="form-label">AB-</label><input type="number" name="inv_AB_minus" class="form-control" min="0" value="0"></div>
+                        <div class="form-group"><label class="form-label">O+</label><input type="number" name="inv_O_plus" class="form-control" min="0" value="0"></div>
+                        <div class="form-group"><label class="form-label">O-</label><input type="number" name="inv_O_minus" class="form-control" min="0" value="0"></div>
+                    </div>
+                    <button type="submit" class="btn btn--primary btn--full-width mt-16">Add Bank</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.1/firebase-firestore.js"></script>
+
+    <script>
+        const firebaseConfig = {
+        apiKey: "AIzaSyBNM7svql_HJqP6KeEMvpy_mWzmtPlbCBM",
+        authDomain: "online-blood-bank-system-10c80.firebaseapp.com",
+        projectId: "online-blood-bank-system-10c80",
+        storageBucket: "online-blood-bank-system-10c80.firebasestorage.app",
+        messagingSenderId: "557467461397",
+        appId: "1:557467461397:web:83920928328c5ad77aeb1c",
+        measurementId: "G-E4P8EMLW0D"
+        };
+
+      firebase.initializeApp(firebaseConfig);
+    </script>
+    <script src="app.js"></script>
+
+</body>
+</html>
